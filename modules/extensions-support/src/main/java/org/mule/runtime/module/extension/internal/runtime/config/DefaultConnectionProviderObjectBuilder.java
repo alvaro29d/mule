@@ -41,6 +41,7 @@ import java.util.List;
 
 import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.FixedValue;
 import net.sf.cglib.proxy.MethodInterceptor;
 
 
@@ -114,8 +115,6 @@ public class DefaultConnectionProviderObjectBuilder<C> extends ConnectionProvide
     Class[] proxyInterfaces = getProxyInterfaces(provider);
     enhancer.setInterfaces(proxyInterfaces);
 
-    MethodInterceptor returnProviderInterceptor = (obj, method, args, proxy) -> provider;
-
     MethodInterceptor invokerInterceptor = (obj, method, args, proxy) -> {
       Reference<Object> resultReference = new Reference<>();
       Reference<Throwable> errorReference = new Reference<>();
@@ -142,7 +141,7 @@ public class DefaultConnectionProviderObjectBuilder<C> extends ConnectionProvide
       @Override
       protected Object getCallback(Method method) {
         if (method.getDeclaringClass().equals(HasDelegate.class) && method.getName().equals("getDelegate")) {
-          return returnProviderInterceptor;
+          return (FixedValue) () -> provider;
         } else {
           return invokerInterceptor;
         }
@@ -151,6 +150,7 @@ public class DefaultConnectionProviderObjectBuilder<C> extends ConnectionProvide
 
     enhancer.setCallbackTypes(callbackHelper.getCallbackTypes());
     enhancer.setCallbackFilter(callbackHelper);
+    enhancer.setCallbacks(callbackHelper.getCallbacks());
 
     if (Enhancer.class.getClassLoader() != classLoader) {
       enhancer.setClassLoader(new CompositeClassLoader(DefaultConnectionProviderObjectBuilder.class.getClassLoader(),
@@ -158,14 +158,7 @@ public class DefaultConnectionProviderObjectBuilder<C> extends ConnectionProvide
       enhancer.setUseCache(false);
     }
 
-    Class<ConnectionProvider<C>> proxyClass = enhancer.createClass();
-    registerStaticCallbacks(proxyClass, callbackHelper.getCallbacks());
-
-    try {
-      return proxyClass.newInstance();
-    } catch (InstantiationException | IllegalAccessException e) {
-      throw new MuleRuntimeException(e);
-    }
+    return (ConnectionProvider<C>) enhancer.create();
   }
 
   /**
