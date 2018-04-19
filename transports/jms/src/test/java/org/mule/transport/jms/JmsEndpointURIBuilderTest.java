@@ -6,17 +6,32 @@
  */
 package org.mule.transport.jms;
 
+import static org.junit.Assert.assertEquals;
+
 import java.net.URI;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.mule.api.endpoint.EndpointURI;
 
-public class JmsEndpointURIBuilderTest {
-	@Test
-    public void testWithFullyQualifiedQueueName() throws Exception {
+public class JmsEndpointURIBuilderTest
+{
+    
+    @Test
+    public void testWithArtemisFullyQualifiedQueueNameWithResourceInfo() throws Exception
+    {
         JmsEndpointURIBuilder b = new JmsEndpointURIBuilder();
-        EndpointURI u =  b.build(new URI("jms://address::queue1"), null);
+        EndpointURI u = b.build(new URI("jms://topic:address::queue1"), null);
         Assert.assertEquals("address::queue1", u.getAddress());
+        assertEquals("topic", u.getResourceInfo());
+    }
+
+    @Test
+    public void testWithArtemisFullyQualifiedQueueNameWithoutResourceInfo() throws Exception
+    {
+        JmsEndpointURIBuilder b = new JmsEndpointURIBuilder();
+        EndpointURI u = b.build(new URI("jms://address::queue1"), null);
+        Assert.assertEquals("address::queue1", u.getAddress());
+        assertEquals(null, u.getResourceInfo());
     }
 }

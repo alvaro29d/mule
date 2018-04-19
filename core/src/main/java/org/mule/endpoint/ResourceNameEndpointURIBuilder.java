@@ -74,7 +74,7 @@ public class ResourceNameEndpointURIBuilder extends AbstractEndpointURIBuilder
         {
             userInfo = credentials;
         }
-        
+
         int x = address.indexOf(":", y);
         int repeatedColon = address.indexOf("::", y);
         if (x > -1 && x != repeatedColon)
